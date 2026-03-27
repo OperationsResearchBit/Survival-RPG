@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Stronghold: Build & Survive</title>
+    <style>
+        body { margin: 0; background: #0d0d0d; color: #ddd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; padding: 40px; }
+        #game-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; width: 1000px; }
+        .panel { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 8px; }
+        h2 { color: #a00; margin-top: 0; font-size: 1.2em; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .res-row { display: flex; justify-content: space-between; margin-bottom: 10px; background: #222; padding: 8px; border-radius: 4px; }
+        .btn { 
+            width: 100%; padding: 12px; margin-bottom: 10px; background: #333; color: white; border: 1px solid #444; cursor: pointer; text-align: center;
+        }
+        .btn:hover:not(:disabled) { background: #a00; border-color: #f00; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        #log { height: 200px; overflow-y: auto; font-size: 0.85em; color: #888; background: #000; padding: 10px; border-radius: 4px; }
+        .log-entry { margin-bottom: 5px; border-left: 2px solid #a00; padding-left: 8px; }
+        #base-visual { height: 150px; background: #222; display: flex; align-items: center; justify-content: center; font-size: 3em; margin-bottom: 20px; border: 2px dashed #444; }
+    </style>
+</head>
+<body>
+
+<div id="game-grid">
+    <!-- LEFT PANEL: Resources & Stats -->
+    <div class="panel">
+        <h2>Shelter Status</h2>
+        <div id="base-visual">⛺</div>
+        <div class="res-row"><span>Scrap Metal:</span> <b id="res-scrap">0</b></div>
+        <div class="res-row"><span>Wood:</span> <b id="res-wood">0</b></div>
+        <div class="res-row"><span>Base Level:</span> <b id="base-lvl">0</b></div>
+        <div id="log">
+            <div class="log-entry">System online. Shelter established.</div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Actions & Upgrades -->
+    <div class="panel">
+        <h2>Actions</h2>
+        <button class="btn" onclick="explore()">🔍 Scavenge the Perimeter</button>
+        
+        <h2>Upgrades</h2>
+        <button id="up-walls" class="btn" onclick="upgrade('walls')">🔨 Reinforce Walls (5 Scrap, 5 Wood)</button>
+        <button id="up-lights" class="btn" onclick="upgrade('lights')">💡 Install Searchlights (10 Scrap)</button>
+        <button id="up-radio" class="btn" onclick="upgrade('radio')" disabled>📻 Repair Radio (Level 2 Required)</button>
+        
+        <div id="story-text" style="margin-top:20px; font-style: italic; color: #aaa;">
+            "The walls are thin. I can hear them scratching outside..."
+        </div>
+    </div>
+</div>
+
+<script>
+    let state = {
+        scrap: 0,
+        wood: 0,
+        level: 0,
+        upgrades: { walls: false, lights: false, radio: false }
+    };
+
+    function addLog(msg) {
+        const log = document.getElementById('log');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerText = msg;
+        log.prepend(entry);
+    }
+
+    function updateUI() {
+        document.getElementById('res-scrap').innerText = state.scrap;
+        document.getElementById('res-wood').innerText = state.wood;
+        document.getElementById('base-lvl').innerText = state.level;
+        
+        // Disable buttons if can't afford
+        document.getElementById('up-walls').disabled = (state.scrap < 5 || state.wood < 5 || state.upgrades.walls);
+        document.getElementById('up-lights').disabled = (state.scrap < 10 || state.upgrades.lights);
+        document.getElementById('up-radio').disabled = (state.level < 2 || state.upgrades.radio);
+
+        if(state.upgrades.walls) document.getElementById('up-walls').innerText = "✅ Walls Reinforced";
+        if(state.upgrades.lights) document.getElementById('up-lights').innerText = "✅ Searchlights Installed";
+    }
+
+    function explore() {
+        let foundScrap = Math.floor(Math.random() * 4);
+        let foundWood = Math.floor(Math.random() * 4);
+        state.scrap += foundScrap;
+        state.wood += foundWood;
+        
+        addLog(`Scavenged: +${foundScrap} Scrap, +${foundWood} Wood.`);
+        updateUI();
+    }
+
+    function upgrade(type) {
+        if(type === 'walls' && state.scrap >= 5 && state.wood >= 5) {
+            state.scrap -= 5; state.wood -= 5;
+            state.upgrades.walls = true;
+            state.level++;
+            document.getElementById('base-visual').innerText = "🏠";
+            addLog("The shelter feels more solid now.");
+        } 
+        else if(type === 'lights' && state.scrap >= 10) {
+            state.scrap -= 10;
+            state.upgrades.lights = true;
+            state.level++;
+            document.getElementById('base-visual').innerText = "🏫";
+            addLog("The darkness is pushed back. I can see them coming.");
+        }
+        
+        if(state.level >= 2) {
+            document.getElementById('story-text').innerText = "The radio is hissing. Someone is out there.";
+        }
+        updateUI();
+    }
+</script>
+</body>
+</html>
